@@ -1,9 +1,11 @@
-const CACHE_NAME = 'chess-planner-v4';
+const CACHE_NAME = 'chess-planner-v6';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/data.js',
+  './js/timer.js',
+  './js/stats.js',
   './js/app.js',
   './js/dashboard.js',
   './js/schedule.js',
@@ -11,6 +13,7 @@ const ASSETS = [
   './js/tracker.js',
   './js/notifications.js',
   './js/sync.js',
+  './js/schedule-editor.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

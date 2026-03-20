@@ -140,6 +140,77 @@ const ScheduleEditorPage = {
     return html;
   },
 
+  // ═══ FIDE Functions ═══
+  editFideId() {
+    const current = getFideId();
+    const formHtml = `
+      <div class="form-group">
+        <label class="form-label">FIDE ID</label>
+        <input class="form-input" id="modal-fide-id" placeholder="VD: 12403938" value="${current}">
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">
+          Tìm FIDE ID tại <a href="https://ratings.fide.com" target="_blank" style="color:var(--blue);">ratings.fide.com</a>
+        </div>
+      </div>
+    `;
+    App.showModal('🌐 Cập nhật FIDE ID', formHtml, () => {
+      const newId = document.getElementById('modal-fide-id').value.trim();
+      if (newId) {
+        setFideId(newId);
+        App.closeModal();
+        App.showToast('✅ Đã lưu FIDE ID: ' + newId);
+        App.renderCurrentPage();
+      } else {
+        App.showToast('⚠️ Nhập FIDE ID');
+      }
+    });
+  },
+
+  async manualFetchFide() {
+    const fideId = getFideId();
+    if (!fideId) {
+      App.showToast('⚠️ Chưa cài FIDE ID. Nhấn "Sửa" để thêm.');
+      return;
+    }
+    const btn = document.getElementById('fide-fetch-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang tải...';
+    }
+    try {
+      const rating = await fetchFideRating(fideId);
+      localStorage.setItem('chess_fide_last_rating', JSON.stringify(rating));
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      localStorage.setItem('chess_fide_last_fetch', currentMonth);
+
+      // Save to ELO history
+      if (rating.standard) {
+        const data = JSON.parse(localStorage.getItem('chess_elo_data') || '[]');
+        const today = now.toISOString().slice(0, 10);
+        if (!data.some(d => d.date === today)) {
+          data.push({
+            date: today, value: rating.standard,
+            note: `🌐 FIDE (Std: ${rating.standard}, Rapid: ${rating.rapid || '?'}, Blitz: ${rating.blitz || '?'})`
+          });
+          localStorage.setItem('chess_elo_data', JSON.stringify(data));
+        }
+      }
+
+      const parts = [];
+      if (rating.standard) parts.push(`Std: ${rating.standard}`);
+      if (rating.rapid) parts.push(`Rapid: ${rating.rapid}`);
+      if (rating.blitz) parts.push(`Blitz: ${rating.blitz}`);
+      App.showToast(`🌐 FIDE: ${parts.join(' | ') || 'Không tìm thấy rating'}`);
+      App.renderCurrentPage();
+    } catch (err) {
+      App.showToast(`❌ Lỗi: ${err.message}`);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 Cập nhật ELO từ FIDE ngay';
+      }
+    }
+  },
+
   showCreateProfile() {
     const formHtml = `
       <div class="form-group">

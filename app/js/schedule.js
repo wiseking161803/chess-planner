@@ -93,6 +93,7 @@ const SchedulePage = {
     const typeInfo = TRAINING_CONFIG.slotTypes[slot.type] || {};
     const today = new Date().toISOString().slice(0, 10);
     const completion = this.getCompletion(today, slot.id);
+    const isMealOrRest = slot.type === 'meal' || slot.type === 'rest';
     let statusBadge = '';
 
     if (completion) {
@@ -103,8 +104,11 @@ const SchedulePage = {
       }
     }
 
+    // Check if timer is running for this slot
+    const timerActive = TimerModule.isRunning && TimerModule.currentSlotId === slot.id;
+
     return `
-      <div class="slot-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${completion ? 'has-status' : ''}"
+      <div class="slot-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''} ${completion ? 'has-status' : ''} ${timerActive ? 'timer-active' : ''}"
            id="slot-${slot.id}"
            onclick="SchedulePage.toggleSlot('${slot.id}')">
         <div class="slot-time">
@@ -127,15 +131,24 @@ const SchedulePage = {
           ${completion && completion.status === 'incomplete' && completion.reason ?
             `<div class="slot-reason">💬 ${completion.reason}</div>` : ''}
           <div class="slot-actions">
+            ${!isMealOrRest ? `
+              <button class="slot-action-btn ${timerActive ? 'timer-active-btn' : 'timer-btn-start'}" onclick="event.stopPropagation(); ${timerActive ? 'TimerModule.stop()' : `TimerModule.start('${slot.id}', '${slot.type}', '${slot.title.replace(/'/g, "\\\\'")}')`}">
+                ${timerActive ? '⏹️ Dừng Timer' : '🍅 Timer'}
+              </button>
+              <button class="slot-action-btn secondary" style="background:rgba(0,188,212,0.12);color:var(--cyan);"
+                      onclick="event.stopPropagation(); TimerModule.showManualEntry('${slot.id}', '${slot.type}', '${slot.title.replace(/'/g, "\\\\'")}')">
+                ⏱️ Ghi TG
+              </button>
+            ` : ''}
             <button class="slot-action-btn primary" onclick="event.stopPropagation(); SchedulePage.markComplete('${slot.id}', '${slot.title}')">
-              ✅ Hoàn thành
+              ✅ Xong
             </button>
             <button class="slot-action-btn secondary" style="background:rgba(244,67,54,0.15);color:var(--red);"
                     onclick="event.stopPropagation(); SchedulePage.markIncomplete('${slot.id}', '${slot.title}')">
-              ❌ Chưa xong
+              ❌
             </button>
             <button class="slot-action-btn secondary" onclick="event.stopPropagation(); SchedulePage.writeNote('${slot.id}', '${slot.title}')">
-              📝 Ghi chú
+              📝
             </button>
           </div>
         </div>

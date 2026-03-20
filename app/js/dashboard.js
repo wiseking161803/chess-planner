@@ -141,6 +141,9 @@ const DashboardPage = {
       }
     }
 
+    // Time tracking stats
+    html += StatsModule.renderDashboardStats();
+
     // Phase Focus
     html += `
       <div class="card" style="margin-top:16px;">
@@ -176,18 +179,17 @@ const DashboardPage = {
     const latestElo = eloData.length > 0 ? eloData[eloData.length - 1].value : TRAINING_CONFIG.playerInfo.startElo;
     const latestWeight = weightData.length > 0 ? weightData[weightData.length - 1].value : TRAINING_CONFIG.playerInfo.startWeight;
 
-    // Calculate streak
+    // Calculate streak (deduplicate by date)
     let streak = 0;
     if (journal.length > 0) {
-      const sorted = [...journal].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const uniqueDates = [...new Set(journal.map(e => (e.date || '').slice(0, 10)))].filter(Boolean).sort().reverse();
       const today = new Date().toISOString().slice(0, 10);
       let checkDate = today;
-      for (const entry of sorted) {
-        const entryDate = entry.date.slice(0, 10);
-        if (entryDate === checkDate || entryDate === this.prevDay(checkDate)) {
+      for (const entryDate of uniqueDates) {
+        if (entryDate === checkDate) {
           streak++;
-          checkDate = entryDate;
-        } else {
+          checkDate = this.prevDay(entryDate);
+        } else if (entryDate < checkDate) {
           break;
         }
       }

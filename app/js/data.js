@@ -1243,9 +1243,33 @@ function setFideId(id) {
 
 async function fetchFideRating(fideId) {
   if (!fideId) throw new Error('No FIDE ID');
+
+  // Method 1: Try the official FIDE API first
+  try {
+    const apiUrl = `https://app.fide.com/api/v1/member/${fideId}`;
+    const r = await fetch(apiUrl, { signal: AbortSignal.timeout(10000) });
+    if (r.ok) {
+      const data = await r.json();
+      const result = { standard: null, rapid: null, blitz: null, name: '' };
+      if (data.name) result.name = `${data.name} ${data.surname || ''}`.trim();
+      if (data.standard_elo) result.standard = parseInt(data.standard_elo);
+      if (data.rapid_elo) result.rapid = parseInt(data.rapid_elo);
+      if (data.blitz_elo) result.blitz = parseInt(data.blitz_elo);
+      // Also check nested ratings object
+      if (!result.standard && data.ratings) {
+        if (data.ratings.standard) result.standard = parseInt(data.ratings.standard);
+        if (data.ratings.rapid) result.rapid = parseInt(data.ratings.rapid);
+        if (data.ratings.blitz) result.blitz = parseInt(data.ratings.blitz);
+      }
+      if (result.standard || result.rapid || result.blitz) return result;
+    }
+  } catch (e) { console.warn('FIDE API failed:', e.message); }
+
+  // Method 2: Fall back to CORS proxies for scraping
   const proxies = [
     `https://api.allorigins.win/raw?url=${encodeURIComponent('https://ratings.fide.com/profile/' + fideId)}`,
-    `https://corsproxy.io/?${encodeURIComponent('https://ratings.fide.com/profile/' + fideId)}`
+    `https://corsproxy.io/?${encodeURIComponent('https://ratings.fide.com/profile/' + fideId)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://ratings.fide.com/profile/' + fideId)}`
   ];
   let html = null;
   for (const url of proxies) {
@@ -1254,22 +1278,38 @@ async function fetchFideRating(fideId) {
       if (r.ok) { html = await r.text(); break; }
     } catch (e) { continue; }
   }
-  if (!html) throw new Error('Could not fetch FIDE profile');
+  if (!html) throw new Error('Không thể kết nối FIDE. Thử lại sau.');
+
   const result = { standard: null, rapid: null, blitz: null, name: '' };
-  const nm = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
-  if (nm) result.name = nm[1].trim();
-  const rp = /(\d{3,4})\s*<\/div>\s*<div[^>]*>\s*(std|standard|rapid|blitz)/gi;
-  let m;
-  while ((m = rp.exec(html)) !== null) {
-    const val = parseInt(m[1]);
-    const type = m[2].toLowerCase();
-    if (type === 'std' || type === 'standard') result.standard = val;
-    else if (type === 'rapid') result.rapid = val;
-    else if (type === 'blitz') result.blitz = val;
+
+  // Extract name
+  const nm = html.match(/<h1[^>]*>([^<]+)<\/h1>/i) || html.match(/<title>([^<]+)<\/title>/i);
+  if (nm) result.name = nm[1].replace(/\s*-\s*FIDE.*$/i, '').trim();
+
+  // Extract ratings — multiple patterns for different FIDE HTML versions
+  const patterns = [
+    /(\d{3,4})\s*<\/div>\s*<div[^>]*>\s*(std|standard|rapid|blitz)/gi,
+    /(std|standard|rapid|blitz)\s*<\/div>\s*<div[^>]*>\s*(\d{3,4})/gi,
+    /class="[^"]*rating[^"]*"[^>]*>\s*(\d{3,4})\s*<[\s\S]*?(std|standard|rapid|blitz)/gi
+  ];
+  for (const rp of patterns) {
+    let m;
+    while ((m = rp.exec(html)) !== null) {
+      const parts = m.slice(1);
+      let val, type;
+      if (/^\d+$/.test(parts[0])) { val = parseInt(parts[0]); type = parts[1].toLowerCase(); }
+      else { type = parts[0].toLowerCase(); val = parseInt(parts[1]); }
+      if (type === 'std' || type === 'standard') result.standard = result.standard || val;
+      else if (type === 'rapid') result.rapid = result.rapid || val;
+      else if (type === 'blitz') result.blitz = result.blitz || val;
+    }
   }
+
+  // Fallback simple patterns
   if (!result.standard) { const s = html.match(/(\d{3,4})\s*\n?\s*STD/i); if (s) result.standard = parseInt(s[1]); }
   if (!result.rapid) { const s = html.match(/(\d{3,4})\s*\n?\s*RAPID/i); if (s) result.rapid = parseInt(s[1]); }
   if (!result.blitz) { const s = html.match(/(\d{3,4})\s*\n?\s*BLITZ/i); if (s) result.blitz = parseInt(s[1]); }
+
   return result;
 }
 
@@ -1300,5 +1340,31 @@ async function autoFetchFideElo() {
     }
   } catch (e) {
     console.warn('FIDE auto-fetch failed:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════
+// localStorage CLEANUP — prune old data
+// ═══════════════════════════════════════════
+
+function cleanupOldCompletions(maxDays = 90) {
+  try {
+    const completions = JSON.parse(localStorage.getItem('chess_completions') || '{}');
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - maxDays);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    let changed = false;
+    for (const key of Object.keys(completions)) {
+      const dateStr = key.slice(0, 10); // key format: "YYYY-MM-DD-slotId"
+      if (dateStr < cutoffStr) {
+        delete completions[key];
+        changed = true;
+      }
+    }
+    if (changed) {
+      localStorage.setItem('chess_completions', JSON.stringify(completions));
+    }
+  } catch (e) {
+    console.warn('Cleanup failed:', e);
   }
 }

@@ -6,6 +6,7 @@
 const TrackerPage = {
   render() {
     let html = '';
+    html += StatsModule.renderFullStats();
     html += this.renderEloSection();
     html += this.renderWeightSection();
     html += this.renderBookProgress();
@@ -355,7 +356,8 @@ const TrackerPage = {
     const shown = data.slice(-5).reverse();
     let html = '';
     for (const entry of shown) {
-      const d = new Date(entry.date);
+      const dateStr = entry.date.length === 10 ? entry.date + 'T00:00:00' : entry.date;
+      const d = new Date(dateStr);
       html += `
         <div class="data-entry">
           <div>
@@ -383,7 +385,7 @@ const TrackerPage = {
       return;
     }
     const data = this.getData(storageKey);
-    data.push({ value: value, date: new Date().toISOString() });
+    data.push({ value: value, date: new Date().toISOString().slice(0, 10) });
     localStorage.setItem(storageKey, JSON.stringify(data));
     input.value = '';
     App.showToast('✅ Đã thêm!');

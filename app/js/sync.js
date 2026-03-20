@@ -64,6 +64,7 @@ const DataSync = {
       completions: JSON.parse(localStorage.getItem('chess_completions') || '{}'),
       bookProgress: JSON.parse(localStorage.getItem('chess_book_progress') || '{}'),
       tournaments: JSON.parse(localStorage.getItem('chess_tournaments') || '[]'),
+      timeLogs: JSON.parse(localStorage.getItem('chess_time_logs') || '[]'),
       settings: {
         gdriveUrl: localStorage.getItem('chess_gdrive_url') || ''
       }
@@ -78,6 +79,7 @@ const DataSync = {
     if (data.completions) localStorage.setItem('chess_completions', JSON.stringify(data.completions));
     if (data.bookProgress) localStorage.setItem('chess_book_progress', JSON.stringify(data.bookProgress));
     if (data.tournaments) localStorage.setItem('chess_tournaments', JSON.stringify(data.tournaments));
+    if (data.timeLogs) localStorage.setItem('chess_time_logs', JSON.stringify(data.timeLogs));
     if (data.settings && data.settings.gdriveUrl) {
       localStorage.setItem('chess_gdrive_url', data.settings.gdriveUrl);
       this.SCRIPT_URL = data.settings.gdriveUrl;

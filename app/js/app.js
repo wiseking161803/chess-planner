@@ -42,12 +42,22 @@ const App = {
     // FIDE ELO auto-crawl (monthly)
     autoFetchFideElo();
 
+    // Cleanup old data
+    cleanupOldCompletions();
+
     // Refresh dashboard every minute to update current session
     this.refreshInterval = setInterval(() => {
       if (this.currentPage === 'dashboard') {
         this.renderCurrentPage();
       }
     }, 60000);
+
+    // Update floating timer every second
+    setInterval(() => {
+      if (TimerModule.isRunning) {
+        TimerModule.updateTimerUI();
+      }
+    }, 1000);
 
     // Handle hash routing
     window.addEventListener('hashchange', () => {
@@ -63,6 +73,9 @@ const App = {
         this.showToast('🔔 Thông báo đã được bật');
       }
     });
+
+    // Offline/Online detection
+    this.setupOfflineDetection();
   },
 
   navigateTo(page, updateHash = true) {
@@ -87,7 +100,19 @@ const App = {
     const container = document.getElementById('page-container');
     const pageModule = this.pages[this.currentPage].module();
 
-    container.innerHTML = `<div class="page-enter">${pageModule.render()}</div>`;
+    try {
+      container.innerHTML = `<div class="page-enter">${pageModule.render()}</div>`;
+    } catch (err) {
+      console.error('Render error:', err);
+      container.innerHTML = `
+        <div class="card" style="padding:24px;text-align:center;margin-top:40px;">
+          <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+          <div style="color:var(--text-primary);font-weight:700;margin-bottom:8px;">Lỗi hiển thị trang</div>
+          <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">${err.message}</div>
+          <button class="btn-submit" onclick="App.navigateTo('dashboard')">🏠 Về Dashboard</button>
+        </div>
+      `;
+    }
     container.scrollTop = 0;
 
     // Auto-scroll to current slot on schedule page
@@ -120,6 +145,29 @@ const App = {
       toast.classList.remove('show');
       setTimeout(() => toast.remove(), 300);
     }, 2500);
+  },
+
+  // ═══ Offline Detection ═══
+  setupOfflineDetection() {
+    const banner = document.getElementById('offline-banner');
+    if (!banner) return;
+
+    const update = () => {
+      if (!navigator.onLine) {
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    };
+
+    window.addEventListener('online', () => {
+      update();
+      this.showToast('✅ Đã kết nối lại!');
+    });
+    window.addEventListener('offline', () => {
+      update();
+    });
+    update();
   },
 
   // ═══ Modal System ═══
@@ -200,3 +248,4 @@ if ('serviceWorker' in navigator) {
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => App.init());
+

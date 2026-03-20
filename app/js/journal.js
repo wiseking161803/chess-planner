@@ -85,6 +85,11 @@ const JournalPage = {
           <option value="insight">#insight</option>
         </select>
       </div>
+      <div style="margin-bottom:12px;">
+        <input type="text" class="form-input" id="journal-search" placeholder="🔍 Tìm kiếm trong nhật ký..."
+               oninput="JournalPage.filterChanged()" value="${this._searchQuery || ''}"
+               style="font-size:13px;">
+      </div>
     `;
 
     const filtered = this.filterEntries(entries);
@@ -133,7 +138,7 @@ const JournalPage = {
   renderSessionPicker() {
     const dateObj = new Date(this.selectedDate + 'T00:00:00');
     const dayOfWeek = dateObj.getDay();
-    const schedule = TRAINING_CONFIG.weeklySchedule[dayOfWeek];
+    const schedule = getActiveSchedule()[dayOfWeek];
 
     if (!schedule || schedule.isRest) {
       return `
@@ -296,33 +301,43 @@ const JournalPage = {
 
   // ═══ Filtering ═══
   filterEntries(entries) {
-    const filter = document.getElementById('journal-filter');
-    const filterVal = filter ? filter.value : 'all';
-
+    const filter = this._lastFilter || 'all';
+    const query = (this._searchQuery || '').toLowerCase().trim();
     let filtered = entries;
 
-    if (filterVal === 'today') {
+    // Apply tag/date filter
+    if (filter === 'today') {
       const today = new Date().toISOString().slice(0, 10);
-      filtered = entries.filter(e => e.date === today);
-    } else if (filterVal === 'week') {
+      filtered = filtered.filter(e => e.date === today);
+    } else if (filter === 'week') {
       const now = new Date();
       const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay() + 1); // Monday
+      weekStart.setDate(now.getDate() - now.getDay() + 1);
       const weekStartStr = weekStart.toISOString().slice(0, 10);
-      filtered = entries.filter(e => e.date >= weekStartStr);
-    } else if (filterVal.startsWith('#')) {
-      filtered = entries.filter(e => e.tags && e.tags.includes(filterVal));
+      filtered = filtered.filter(e => e.date >= weekStartStr);
+    } else if (filter !== 'all') {
+      filtered = filtered.filter(e => e.tags && e.tags.includes(filter));
+    }
+
+    // Apply search
+    if (query) {
+      filtered = filtered.filter(e => {
+        const text = [e.notes, e.lessons, e.session, (e.tags || []).join(' ')].join(' ').toLowerCase();
+        return text.includes(query);
+      });
     }
 
     return filtered.slice(0, 50);
   },
 
   filterChanged() {
+    const filter = document.getElementById('journal-filter');
+    this._lastFilter = filter ? filter.value : 'all';
     App.renderCurrentPage();
     // Preserve filter selection
     setTimeout(() => {
-      const filter = document.getElementById('journal-filter');
-      if (filter) filter.value = this._lastFilter || 'all';
+      const f = document.getElementById('journal-filter');
+      if (f) f.value = this._lastFilter || 'all';
     }, 50);
   },
 
