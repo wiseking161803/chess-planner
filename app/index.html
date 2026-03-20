@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Chess Training Planner — 20-Week Training Program">
+  <title>♟ Chess Training Planner</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-icon">♟</div>
+    <div class="splash-title">Chess Training</div>
+    <div class="splash-subtitle">Road to 2500 ELO 👑</div>
+    <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" class="app hidden">
+    <!-- Header -->
+    <header id="app-header" class="app-header">
+      <div class="header-left">
+        <span class="header-icon">♟</span>
+        <span class="header-title" id="header-title">Dashboard</span>
+      </div>
+      <div class="header-right">
+        <button class="header-btn" id="btn-notification" title="Thông báo">
+          <span class="notif-icon">🔔</span>
+          <span class="notif-badge hidden" id="notif-badge">!</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Container -->
+    <main id="page-container" class="page-container">
+      <!-- Pages are rendered here by JS -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-page="dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Tổng quan</span>
+      </button>
+      <button class="nav-btn" data-page="schedule">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Lịch học</span>
+      </button>
+      <button class="nav-btn" data-page="journal">
+        <span class="nav-icon">📝</span>
+        <span class="nav-label">Nhật ký</span>
+      </button>
+      <button class="nav-btn" data-page="tracker">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Tiến trình</span>
+      </button>
+      <button class="nav-btn" data-page="editor">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Tùy biến</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/schedule.js"></script>
+  <script src="js/journal.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/schedule-editor.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

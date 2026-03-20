@@ -1,0 +1,30 @@
+Sheet names: ['Thời Khóa Biểu Chi Tiết Hàng Tu', 'Sáchkhóa học tàn cuộc', 'Sáchkhóa học trung cuộc']
+
+=== SHEET: Thời Khóa Biểu Chi Tiết Hàng Tu === (rows=11, cols=5)
+Khung Giờ | Thứ 2  | Thứ 3 & Thứ 5 | Thứ 4  | Thứ 7 & Chủ Nhật 
+05:00 - 06:00 | Thể dục (60p) | Thể dục (60p) | Thể dục (60p) | Thể dục (60p): Vận động nhẹ nhàng
+06:00 - 09:00 | Cờ Vua (3h): Học Khai cuộc | Cờ Vua (3h): Học Trung cuộc (Thế trận) | Cờ Vua (3h): Đấu cờ thực chiến & Phân tích | Cờ Vua (3h): Đấu cờ / Tham gia giải đấu
+09:00 - 09:30 | Bữa Sáng  | Bữa Sáng | Bữa Sáng | Bữa Sáng
+09:30 - 12:00 | Cờ Vua (2.5h): Giải bài tập (Tính toán) | Cờ Vua (2.5h): Xem VODs / Xem ván mẫu | Cờ Vua (2.5h): Học Tàn cuộc | Cờ Vua (2.5h): Giải bài tập chuyên sâu
+12:00 - 13:00 | Nghỉ trưa / Chợp mắt 30 phút | Nghỉ trưa / Chợp mắt 30 phút | Nghỉ trưa / Chợp mắt 30 phút | Nghỉ trưa / Chợp mắt
+13:00 - 13:30 | Bữa Trưa | Bữa Trưa | Bữa Trưa | Bữa Trưa
+13:30 - 15:00 | Cờ Vua (1.5h): Học Tàn cuộc | Dạy cờ | Dạy cờ | Cờ Vua (1.5h): Học Khai cuộc
+15:00 - 16:30 | Cờ Vua (1.5h): Đấu cờ & Phân tích | Cờ Vua (1.5h): Giải bài tập / Chiến thuật | Dạy cờ | Cờ Vua (1.5h): Học Trung cuộc / Tàn cuộc
+16:30 - 17:00 | Bữa Tối (Kết thúc cửa sổ ăn) | Bữa Tối (Kết thúc cửa sổ ăn) | Bữa Tối (Kết thúc cửa sổ ăn) | Bữa Tối (Kết thúc cửa sổ ăn)
+17:00 - 19:00 | Dạy cờ | Cờ Vua (2h): Học Khai cuộc | Dạy cờ | Thư giãn, rời xa bàn cờ
+
+=== SHEET: Sáchkhóa học tàn cuộc === (rows=6, cols=2)
+STT | Tên sách/khóa học
+1.0 | Silman's Complete Endgame Course (IM Jeremy Silman)
+2.0 | 100 Endgames You Must Know (GM Jesus de la Villa)
+3.0 | Endgame Strategy (Mikhail Shereshevsky)
+4.0 | Mastering Endgame Strategy (GM Johan Hellsten)
+5.0 | Endgame Studies 101" của IM Kostya Kavutskiy
+
+=== SHEET: Sáchkhóa học trung cuộc === (rows=6, cols=2)
+STT | Tên sách/khóa học
+1.0 | 1. U2000 - Foundation of Positional Play (IM Renier Castellanos - Killer Chess Training)
+2.0 | Techniques of Positional Play (Valeri Bronznik & GM Peter Heine Nielsen)
+3.0 | Mastering Chess Strategy (GM Johan Hellsten)
+4.0 | Chess Structures – A Grandmaster Guide (GM Mauricio Flores Rios)
+5.0 | The Complete Manual of Positional Chess - Tập 1 & Tập 2 (GM Konstantin Sakaev & GM Konstantin Landa)
