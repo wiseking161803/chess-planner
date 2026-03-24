@@ -217,6 +217,9 @@ const StatsModule = {
       const color = TimerModule.getCategoryColor(log.category);
       const label = TimerModule.getCategoryLabel(log.category);
       const d = new Date(log.date + 'T00:00:00');
+      const overrideInfo = log.originalType
+        ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">🔄 Lịch: ${TimerModule.getCategoryLabel(TimerModule.getCategory(log.originalType))}</div>`
+        : '';
       html += `
         <div class="data-entry" style="border-left:3px solid ${color};">
           <div style="flex:1;">
@@ -224,6 +227,7 @@ const StatsModule = {
             <div style="font-size:11px;color:var(--text-dim);">
               ${d.toLocaleDateString('vi-VN')} • ${label} • ${TimerModule.formatMinutes(log.minutes)}
             </div>
+            ${overrideInfo}
             ${log.note ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">📝 ${log.note}</div>` : ''}
           </div>
           <button class="data-entry-delete" onclick="StatsModule.deleteLog('${log.id}')">✕</button>

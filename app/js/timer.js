@@ -73,10 +73,9 @@ const TimerModule = {
     clearInterval(this.timerInterval);
 
     const minutes = Math.round(this.elapsed / 60000);
-    if (minutes > 0) {
-      this.saveTimeLog(this.currentSlotId, this.currentSlotType, this.currentSlotTitle, minutes);
-      App.showToast(`⏱️ Đã ghi ${minutes} phút — ${this.currentSlotTitle}`);
-    }
+    const slotId = this.currentSlotId;
+    const slotType = this.currentSlotType;
+    const slotTitle = this.currentSlotTitle;
 
     this.isRunning = false;
     this.isPaused = false;
@@ -85,9 +84,46 @@ const TimerModule = {
     this.currentSlotType = null;
     this.currentSlotTitle = '';
     this.pomodoroCount = 0;
-
     this.updateTimerUI();
+
+    if (minutes > 0) {
+      this.showStopConfirm(slotId, slotType, slotTitle, minutes);
+    }
+
     if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+  },
+
+  // Show confirmation modal after stopping timer — allows task type override
+  showStopConfirm(slotId, slotType, slotTitle, minutes) {
+    const formHtml = `
+      <div class="form-group">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:28px;font-weight:700;color:var(--gold);">${this.formatTime(minutes * 60000)}</div>
+          <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">${slotTitle}</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">🔄 Nhiệm vụ thực tế</label>
+        <select class="form-input" id="modal-override-type" style="padding:10px;">
+          ${this.renderTypeOptions(slotType)}
+        </select>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Nếu bạn làm nhiệm vụ khác với lịch, hãy đổi lại cho chính xác</div>
+      </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">📝 Ghi chú (tùy chọn)</label>
+        <input class="form-input" id="modal-stop-note" placeholder="VD: Học được 3 biến mới...">
+      </div>
+    `;
+
+    App.showModal(`⏹️ Lưu Phiên Học — ${minutes} phút`, formHtml, () => {
+      const overrideType = document.getElementById('modal-override-type').value;
+      const note = document.getElementById('modal-stop-note').value.trim();
+      this.saveTimeLog(slotId, slotType, slotTitle, minutes, note, overrideType !== slotType ? overrideType : null);
+      App.closeModal();
+      const actualLabel = this.getCategoryLabel(this.getCategory(overrideType || slotType));
+      App.showToast(`⏱️ Đã ghi ${minutes} phút — ${actualLabel}`);
+      App.renderCurrentPage();
+    });
   },
 
   tick() {
@@ -184,6 +220,13 @@ const TimerModule = {
         </div>
       </div>
       <div class="form-group" style="margin-top:12px;">
+        <label class="form-label">🔄 Nhiệm vụ thực tế</label>
+        <select class="form-input" id="modal-override-type" style="padding:10px;">
+          ${this.renderTypeOptions(slotType)}
+        </select>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Đổi nếu bạn làm khác với lịch</div>
+      </div>
+      <div class="form-group" style="margin-top:8px;">
         <label class="form-label">📝 Ghi chú (tùy chọn)</label>
         <input class="form-input" id="modal-time-note" placeholder="VD: Học được 3 biến mới...">
       </div>
@@ -195,12 +238,28 @@ const TimerModule = {
         App.showToast('⚠️ Nhập số phút hợp lệ');
         return;
       }
+      const overrideType = document.getElementById('modal-override-type').value;
       const note = document.getElementById('modal-time-note').value.trim();
-      this.saveTimeLog(slotId, slotType, slotTitle, minutes, note);
+      this.saveTimeLog(slotId, slotType, slotTitle, minutes, note, overrideType !== slotType ? overrideType : null);
       App.closeModal();
-      App.showToast(`⏱️ Đã ghi ${minutes} phút — ${slotTitle}`);
+      const actualLabel = this.getCategoryLabel(this.getCategory(overrideType || slotType));
+      App.showToast(`⏱️ Đã ghi ${minutes} phút — ${actualLabel}`);
       App.renderCurrentPage();
     });
+  },
+
+  // ═══ Task Type Override Helper ═══
+
+  renderTypeOptions(currentType) {
+    const types = TRAINING_CONFIG.slotTypes;
+    const skipTypes = ['meal', 'rest'];
+    let html = '';
+    for (const [key, info] of Object.entries(types)) {
+      if (skipTypes.includes(key)) continue;
+      const selected = key === currentType ? 'selected' : '';
+      html += `<option value="${key}" ${selected}>${info.label}</option>`;
+    }
+    return html;
   },
 
   // ═══ Time Data Management ═══
@@ -256,22 +315,28 @@ const TimerModule = {
     return colors[category] || 'var(--text-dim)';
   },
 
-  saveTimeLog(slotId, slotType, slotTitle, minutes, note = '') {
+  saveTimeLog(slotId, slotType, slotTitle, minutes, note = '', overrideType = null) {
     const logs = this.getTimeLogs();
     const today = new Date().toISOString().slice(0, 10);
-    logs.push({
+    const actualType = overrideType || slotType;
+    const entry = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       date: today,
       timestamp: new Date().toISOString(),
       slotId,
-      slotType,
+      slotType: actualType,
       slotTitle,
-      category: this.getCategory(slotType),
+      category: this.getCategory(actualType),
       minutes,
       note,
       week: typeof getCurrentWeek === 'function' ? getCurrentWeek() : 0,
       phase: typeof getCurrentPhase === 'function' ? getCurrentPhase().id : 0
-    });
+    };
+    // Save original type if overridden
+    if (overrideType && overrideType !== slotType) {
+      entry.originalType = slotType;
+    }
+    logs.push(entry);
     localStorage.setItem('chess_time_logs', JSON.stringify(logs));
   },
 
