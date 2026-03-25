@@ -201,18 +201,9 @@ const TRAINING_CONFIG = {
       isRest: false,
       slots: [
         {
-          id: 'mon-1',
-          time: '05:00',
-          endTime: '06:00',
-          type: 'exercise',
-          icon: '🏃',
-          title: 'Chạy bộ Zone 2 (45p) + Stretching',
-          description: 'Cardio giảm cân, HR 120-140bpm. 15 phút stretching sau chạy.'
-        },
-        {
           id: 'mon-2',
-          time: '06:00',
-          endTime: '09:00',
+          time: '05:00',
+          endTime: '08:00',
           type: 'opening',
           icon: '♟️',
           title: 'Khai cuộc',
@@ -313,6 +304,15 @@ const TRAINING_CONFIG = {
           icon: '👨‍🏫',
           title: 'Dạy cờ',
           description: 'Trung tâm tỉnh. Dạy cũng là học — quan sát lỗi phổ biến của học sinh.'
+        },
+        {
+          id: 'mon-11',
+          time: '21:00',
+          endTime: '22:00',
+          type: 'exercise',
+          icon: '🏃',
+          title: 'Chạy bộ Zone 2 (45p) + Stretching',
+          description: 'Cardio giảm cân, HR 120-140bpm. 15 phút stretching sau chạy.'
         }
       ]
     },
@@ -322,18 +322,9 @@ const TRAINING_CONFIG = {
       isRest: false,
       slots: [
         {
-          id: 'tue-1',
-          time: '05:00',
-          endTime: '06:00',
-          type: 'exercise',
-          icon: '💪',
-          title: 'Dumbbell Upper Body (50p) + Stretch',
-          description: 'Chest press, rows, shoulder press, bicep curls, tricep extensions. 3 sets x 12 reps.'
-        },
-        {
           id: 'tue-2',
-          time: '06:00',
-          endTime: '09:00',
+          time: '05:00',
+          endTime: '08:00',
           type: 'middlegame',
           icon: '♟️',
           title: 'Trung cuộc — Thế trận',
@@ -399,11 +390,11 @@ const TRAINING_CONFIG = {
         {
           id: 'tue-8',
           time: '15:00',
-          endTime: '16:30',
+          endTime: '16:00',
           type: 'tactics',
           icon: '🧩',
           title: 'Bài tập chiến thuật',
-          duration: '1.5h',
+          duration: '1h',
           phaseContent: {
             1: 'KCT: Focus pattern recognition. 15-20 bài.',
             2: 'KCT: Combinations + tăng độ khó. 20 bài.',
@@ -412,9 +403,18 @@ const TRAINING_CONFIG = {
           }
         },
         {
-          id: 'tue-9',
-          time: '16:30',
+          id: 'tue-11',
+          time: '16:00',
           endTime: '17:00',
+          type: 'exercise',
+          icon: '💪',
+          title: 'Dumbbell Upper Body (50p) + Stretch',
+          description: 'Chest press, rows, shoulder press, bicep curls, tricep extensions. 3 sets x 12 reps.'
+        },
+        {
+          id: 'tue-9',
+          time: '17:00',
+          endTime: '17:30',
           type: 'meal',
           icon: '🍽️',
           title: 'Bữa tối',
@@ -422,8 +422,8 @@ const TRAINING_CONFIG = {
         },
         {
           id: 'tue-10',
-          time: '17:00',
-          endTime: '19:00',
+          time: '17:30',
+          endTime: '19:30',
           type: 'opening',
           icon: '♟️',
           title: 'Khai cuộc',
@@ -443,18 +443,9 @@ const TRAINING_CONFIG = {
       isRest: false,
       slots: [
         {
-          id: 'wed-1',
-          time: '05:00',
-          endTime: '06:00',
-          type: 'exercise',
-          icon: '🏃',
-          title: 'Chạy bộ Zone 2 (45p) + Stretching',
-          description: 'Cardio, HR 120-140bpm. 15 phút stretching.'
-        },
-        {
           id: 'wed-2',
-          time: '06:00',
-          endTime: '09:00',
+          time: '05:00',
+          endTime: '08:00',
           type: 'play',
           icon: '⚔️',
           title: 'Đấu cờ thực chiến & Phân tích',
@@ -534,6 +525,15 @@ const TRAINING_CONFIG = {
           icon: '👨‍🏫',
           title: 'Dạy cờ',
           description: 'Trung tâm tỉnh (buổi tối).'
+        },
+        {
+          id: 'wed-10',
+          time: '21:00',
+          endTime: '22:00',
+          type: 'exercise',
+          icon: '🏃',
+          title: 'Chạy bộ Zone 2 (45p) + Stretching',
+          description: 'Cardio, HR 120-140bpm. 15 phút stretching.'
         }
       ]
     },
@@ -543,18 +543,9 @@ const TRAINING_CONFIG = {
       isRest: false,
       slots: [
         {
-          id: 'thu-1',
-          time: '05:00',
-          endTime: '06:00',
-          type: 'exercise',
-          icon: '💪',
-          title: 'Dumbbell Lower Body (50p) + Stretch',
-          description: 'Goblet squats, lunges, RDL, calf raises. 3 sets x 12-15 reps.'
-        },
-        {
           id: 'thu-2',
-          time: '06:00',
-          endTime: '09:00',
+          time: '05:00',
+          endTime: '08:00',
           type: 'middlegame',
           icon: '♟️',
           title: 'Trung cuộc — Thế trận',
@@ -626,11 +617,11 @@ const TRAINING_CONFIG = {
         {
           id: 'thu-8',
           time: '15:00',
-          endTime: '16:30',
+          endTime: '16:00',
           type: 'tactics',
           icon: '🧩',
           title: 'Bài tập chiến thuật',
-          duration: '1.5h',
+          duration: '1h',
           phaseContent: {
             1: 'KCT: 15-20 bài. Mix themes.',
             2: 'KCT: 20 bài. Harder puzzles.',
@@ -639,9 +630,18 @@ const TRAINING_CONFIG = {
           }
         },
         {
-          id: 'thu-9',
-          time: '16:30',
+          id: 'thu-11',
+          time: '16:00',
           endTime: '17:00',
+          type: 'exercise',
+          icon: '💪',
+          title: 'Dumbbell Lower Body (50p) + Stretch',
+          description: 'Goblet squats, lunges, RDL, calf raises. 3 sets x 12-15 reps.'
+        },
+        {
+          id: 'thu-9',
+          time: '17:00',
+          endTime: '17:30',
           type: 'meal',
           icon: '🍽️',
           title: 'Bữa tối',
@@ -649,8 +649,8 @@ const TRAINING_CONFIG = {
         },
         {
           id: 'thu-10',
-          time: '17:00',
-          endTime: '19:00',
+          time: '17:30',
+          endTime: '19:30',
           type: 'endgame',
           icon: '♟️',
           title: 'Tàn cuộc',
@@ -714,18 +714,9 @@ const TRAINING_CONFIG = {
       isRest: false,
       slots: [
         {
-          id: 'sat-1',
-          time: '05:00',
-          endTime: '06:00',
-          type: 'exercise',
-          icon: '💪',
-          title: 'Dumbbell Full Body (50p) + Stretch',
-          description: 'Total body: compound movements. Push-ups, squats, rows, lunges, planks.'
-        },
-        {
           id: 'sat-2',
-          time: '06:00',
-          endTime: '09:00',
+          time: '05:00',
+          endTime: '08:00',
           type: 'play',
           icon: '⚔️',
           title: 'Đấu cờ / Giải đấu',
@@ -797,11 +788,11 @@ const TRAINING_CONFIG = {
         {
           id: 'sat-8',
           time: '15:00',
-          endTime: '16:30',
+          endTime: '16:00',
           type: 'mixed',
           icon: '♟️',
           title: 'Trung cuộc / Tàn cuộc',
-          duration: '1.5h',
+          duration: '1h',
           phaseContent: {
             1: 'Mixed review: positional concepts + endgame practice.',
             2: 'Chess Structures + endgame drills.',
@@ -810,9 +801,18 @@ const TRAINING_CONFIG = {
           }
         },
         {
-          id: 'sat-9',
-          time: '16:30',
+          id: 'sat-11',
+          time: '16:00',
           endTime: '17:00',
+          type: 'exercise',
+          icon: '💪',
+          title: 'Dumbbell Full Body (50p) + Stretch',
+          description: 'Total body: compound movements. Push-ups, squats, rows, lunges, planks.'
+        },
+        {
+          id: 'sat-9',
+          time: '17:00',
+          endTime: '17:30',
           type: 'meal',
           icon: '🍽️',
           title: 'Bữa tối',
@@ -820,8 +820,8 @@ const TRAINING_CONFIG = {
         },
         {
           id: 'sat-10',
-          time: '17:00',
-          endTime: '19:00',
+          time: '17:30',
+          endTime: '19:30',
           type: 'rest',
           icon: '🎯',
           title: 'Thư giãn',
