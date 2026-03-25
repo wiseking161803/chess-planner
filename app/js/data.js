@@ -1281,8 +1281,8 @@ const SCHEDULE_MIDDLEGAME = {
 };
 
 // ─── TOURNAMENT PRESET ───
-// Focus: Max tactics (16h), play (10h), opponent prep (6h). NO TEACHING.
-// Based on NextLevelChess & GM Marin pre-tournament advice
+// Focus: Max tactics + play + opponent prep. NO TEACHING. Evening slots 19:30-21:00.
+// Based on NextLevelChess & GM Marin pre-tournament advice. ~63h chess/week.
 const SCHEDULE_TOURNAMENT = {
   1: { name: 'Thứ 2', isRest: false, slots: [
     _slot('mon-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật — Calculation', 'KCT: 30+ bài. Deep calculation 4-6 nước. Blindfold variations.'),
@@ -1293,6 +1293,7 @@ const SCHEDULE_TOURNAMENT = {
     _slot('mon-7', '15:00', '16:30', 'tactics', '🧩', 'Chiến thuật — Pattern Drill', 'Speed solving: 50+ bài easy-medium. Build pattern recognition.'),
     _meal('mon-8', '16:30', 'Bữa tối', 'Salad protein + khoai lang (~600kcal).'),
     _slot('mon-9', '17:00', '19:00', 'study', '🎯', 'Opponent Prep', 'Phân tích ván đấu đối thủ giải sắp tới. Tìm weakness.'),
+    _slot('mon-10', '19:30', '21:00', 'tactics', '🧩', 'Chiến thuật buổi tối', 'KCT: 15-20 bài nhẹ. Pattern drill + confidence building trước khi ngủ.'),
     _runMon
   ]},
   2: { name: 'Thứ 3', isRest: false, slots: [
@@ -1304,7 +1305,8 @@ const SCHEDULE_TOURNAMENT = {
     _slot('tue-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài. Mix themes.'),
     _dumbTue,
     _meal('tue-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
-    _slot('tue-9', '17:30', '19:30', 'study', '🎯', 'Opponent Prep', 'Phân tích đối thủ: khai cuộc hay chơi, weakness patterns.')
+    _slot('tue-9', '17:30', '19:30', 'study', '🎯', 'Opponent Prep', 'Phân tích đối thủ: khai cuộc hay chơi, weakness patterns.'),
+    _slot('tue-10', '19:30', '21:00', 'study', '📺', 'VODs buổi tối', 'Xem ván mẫu GM thư giãn. Fischer, Tal, Carlsen classics.')
   ]},
   3: { name: 'Thứ 4', isRest: false, slots: [
     _slot('wed-1', '05:00', '08:00', 'play', '⚔️', 'Đấu cờ — Serious Games', '1-2 ván 30+0. Tournament conditions. Deep analysis sau mỗi ván.'),
@@ -1315,6 +1317,7 @@ const SCHEDULE_TOURNAMENT = {
     _slot('wed-7', '15:00', '16:30', 'endgame', '♟️', 'Tàn cuộc — Key Positions', 'Ôn lại must-know endgames. Speed drills.'),
     _meal('wed-8', '16:30', 'Bữa tối', 'Salad protein (~600kcal).'),
     _slot('wed-9', '17:00', '19:00', 'study', '🎯', 'Opponent Prep', 'Chuẩn bị khai cuộc specific cho đối thủ.'),
+    _slot('wed-10', '19:30', '21:00', 'tactics', '🧩', 'Chiến thuật buổi tối', 'Mixed difficulty. Pattern recognition + speed solving.'),
     _runWed
   ]},
   4: { name: 'Thứ 5', isRest: false, slots: [
@@ -1326,7 +1329,8 @@ const SCHEDULE_TOURNAMENT = {
     _slot('thu-7', '15:00', '16:00', 'opening', '♟️', 'Khai cuộc — Specific Prep', 'Chuẩn bị anti-systems cho đối thủ cụ thể.'),
     _dumbThu,
     _meal('thu-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
-    _slot('thu-9', '17:30', '19:30', 'tactics', '🧩', 'Chiến thuật buổi tối', 'Easy-medium puzzles. Build confidence trước giải.')
+    _slot('thu-9', '17:30', '19:30', 'tactics', '🧩', 'Chiến thuật buổi tối', 'Easy-medium puzzles. Build confidence trước giải.'),
+    _slot('thu-10', '19:30', '21:00', 'study', '📚', 'Đọc sách cờ / Visualization', 'Đọc sách cờ nhẹ nhàng + visualize ván đấu thành công.')
   ]},
   5: { name: 'Thứ 6', isRest: true,
     restMessage: '🟢 Nghỉ ngơi HOÀN TOÀN — Hồi phục trước giải. Không cờ!',
@@ -1439,9 +1443,10 @@ const SCHEDULE_RECOVERY = {
   ]}
 };
 
+
 // ═══ Schedule Profile System ═══
 
-const SCHEDULE_PROFILES_VERSION = 2; // Increment to force profile reset with new presets
+const SCHEDULE_PROFILES_VERSION = 4; // Increment to force profile reset with new presets
 
 function getScheduleProfiles() {
   const savedVersion = parseInt(localStorage.getItem('chess_schedule_profiles_version') || '0');
@@ -1476,8 +1481,8 @@ function getScheduleProfiles() {
       createdAt: new Date().toISOString()
     },
     'tournament': {
-      name: '🔴 Trước Giải — Cường Độ Cao',
-      description: 'Bỏ dạy, max tactics (16h), opponent prep. 2-3 tuần trước giải lớn.',
+      name: '🔴 Cường Độ Cao — Trước Giải',
+      description: 'Bỏ dạy, max tactics + opponent prep + slot tối 19:30-21:00. ~63h cờ/tuần.',
       schedule: JSON.parse(JSON.stringify(SCHEDULE_TOURNAMENT)),
       isDefault: false,
       isBuiltIn: true,
