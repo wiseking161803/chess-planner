@@ -1086,29 +1086,421 @@ function getCurrentPhase() {
   return TRAINING_CONFIG.phases[TRAINING_CONFIG.phases.length - 1];
 }
 
+// ═══ Schedule Presets ═══
+// Based on research from ChessMood, Dvoretsky, NextLevelChess, Flores Rios, Hellsten
+// Tactics 30-40% recommended for 1800-2200 (ChessMood, Dvoretsky)
+// Periodization in 3-week blocks (NextLevelChess)
+// Pre-tournament: decrease intensity, stop new material (NextLevelChess, GM Marin)
+
+// Helper: common slots reused across presets
+function _meal(id, time, title, desc) {
+  return { id, time, endTime: _addMin(time, 30), type: 'meal', icon: title === 'Bữa sáng' ? '🍳' : title === 'Bữa trưa' ? '🍚' : '🍽️', title, description: desc };
+}
+function _rest(id, time, dur, title, desc) {
+  return { id, time, endTime: _addMin(time, dur), type: 'rest', icon: '😴', title: title || 'Nghỉ trưa', description: desc || 'Chợp mắt 30 phút.' };
+}
+function _exercise(id, time, endTime, icon, title, desc) {
+  return { id, time, endTime, type: 'exercise', icon, title, description: desc };
+}
+function _slot(id, time, endTime, type, icon, title, desc) {
+  return { id, time, endTime, type, icon, title, description: desc, duration: _durStr(time, endTime) };
+}
+function _addMin(timeStr, min) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h * 60 + m + min;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+function _durStr(start, end) {
+  const s = start.split(':').map(Number), e = end.split(':').map(Number);
+  const diff = (e[0] * 60 + e[1]) - (s[0] * 60 + s[1]);
+  if (diff >= 60 && diff % 60 === 0) return `${diff / 60}h`;
+  if (diff >= 60) return `${Math.floor(diff / 60)}h${diff % 60}m`;
+  return `${diff}m`;
+}
+
+// Common exercise slots
+const _runMon = _exercise('mon-ex', '21:00', '22:00', '🏃', 'Chạy bộ Zone 2 (45p) + Stretching', 'Cardio giảm cân, HR 120-140bpm. 15 phút stretching.');
+const _runWed = _exercise('wed-ex', '21:00', '22:00', '🏃', 'Chạy bộ Zone 2 (45p) + Stretching', 'Cardio, HR 120-140bpm. 15 phút stretching.');
+const _dumbTue = _exercise('tue-ex', '16:00', '17:00', '💪', 'Dumbbell Upper Body (50p) + Stretch', 'Chest press, rows, shoulder press, bicep curls. 3x12.');
+const _dumbThu = _exercise('thu-ex', '16:00', '17:00', '💪', 'Dumbbell Lower Body (50p) + Stretch', 'Squats, lunges, RDL, calf raises. 3x12-15.');
+const _dumbSat = _exercise('sat-ex', '16:00', '17:00', '💪', 'Dumbbell Full Body (50p) + Stretch', 'Total body: compound movements. Push-ups, squats, rows.');
+const _sunRecovery = _exercise('sun-ex', '05:00', '06:00', '🚶', 'Active Recovery — Đi bộ / Yoga', '30-40 phút đi bộ nhẹ hoặc yoga.');
+
+// ─── ENDGAME PRESET ───
+// Focus: 14h endgame, 12h tactics, 6h play, 4h opening maintenance
+const SCHEDULE_ENDGAME = {
+  1: { name: 'Thứ 2', isRest: false, slots: [
+    _slot('mon-1', '05:00', '08:00', 'endgame', '♟️', 'Tàn cuộc chuyên sâu', '100 Endgames / Silman / Shereshevsky. Học 2-3 positions mới, luyện trên board.'),
+    _meal('mon-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau xanh (~500kcal).'),
+    _slot('mon-3', '09:30', '12:00', 'tactics', '🧩', 'Bài tập chiến thuật', 'KCT: 25-30 bài/ngày. Pattern recognition + calculation depth 3-5 nước.'),
+    _rest('mon-4', '12:00', 60), _meal('mon-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('mon-6', '13:30', '15:00', 'endgame', '♟️', 'Tàn cuộc — Drills', 'Luyện endgame positions trên Lichess. Pawn endings, Rook endings.'),
+    _slot('mon-7', '15:00', '16:30', 'play', '⚔️', 'Đấu cờ & Phân tích', '1-2 ván 15+10, focus chuyển sang endgame thắng.'),
+    _meal('mon-8', '16:30', 'Bữa tối', 'Salad protein + khoai lang (~600kcal).'),
+    _slot('mon-9', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _runMon
+  ]},
+  2: { name: 'Thứ 3', isRest: false, slots: [
+    _slot('tue-1', '05:00', '08:00', 'endgame', '♟️', 'Tàn cuộc — Rook Endings', 'Rook endings chuyên sâu: Lucena, Philidor, R+P vs R.'),
+    _meal('tue-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('tue-3', '09:30', '12:00', 'study', '📺', 'VODs — Endgame Technique', 'Ván mẫu GM minh họa endgame technique. Capablanca, Carlsen endgames.'),
+    _rest('tue-4', '12:00', 60), _meal('tue-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('tue-6', '13:30', '15:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _slot('tue-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài. Mix themes.'),
+    _dumbTue,
+    _meal('tue-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('tue-9', '17:30', '19:30', 'opening', '♟️', 'Khai cuộc — Duy trì', 'Chessable Spaced Rep. Chỉ ôn lại, không học biến mới.')
+  ]},
+  3: { name: 'Thứ 4', isRest: false, slots: [
+    _slot('wed-1', '05:00', '08:00', 'endgame', '♟️', 'Tàn cuộc — Minor Pieces', 'B vs N, opposite-colored bishops, N+P endings.'),
+    _meal('wed-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('wed-3', '09:30', '12:00', 'endgame', '♟️', 'Tàn cuộc — Practical Drills', 'Luyện positions trên board. Play out từ cuốn sách.'),
+    _rest('wed-4', '12:00', 60), _meal('wed-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('wed-6', '13:30', '16:30', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi chiều dài).'),
+    _meal('wed-7', '16:30', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('wed-8', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi tối).'),
+    _runWed
+  ]},
+  4: { name: 'Thứ 5', isRest: false, slots: [
+    _slot('thu-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật chuyên sâu', 'KCT: 30+ bài. Calculation depth 3-5 nước. Blindfold practice.'),
+    _meal('thu-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('thu-3', '09:30', '12:00', 'endgame', '♟️', 'Tàn cuộc — Queen & Complex', 'Queen endings, R+B/N endings. Advanced techniques.'),
+    _rest('thu-4', '12:00', 60), _meal('thu-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('thu-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Duy trì', 'Positional concepts review. Weak squares, pawn chains.'),
+    _slot('thu-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài. Hard puzzles.'),
+    _dumbThu,
+    _meal('thu-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('thu-9', '17:30', '19:30', 'endgame', '♟️', 'Tàn cuộc — Ôn tập', '100 Endgames review + practice positions.')
+  ]},
+  5: { name: 'Thứ 6', isRest: true,
+    restMessage: '🟢 Nghỉ ngơi — Hồi phục năng lượng. Đi bộ nhẹ 30 phút nếu muốn.',
+    slots: [
+      _exercise('fri-1', '07:00', '07:30', '🚶', 'Đi bộ nhẹ (optional)', '30 phút đi bộ thư giãn.'),
+      _meal('fri-2', '09:00', 'Bữa sáng', 'Ăn thoải mái.'), _meal('fri-3', '13:00', 'Bữa trưa', 'Ăn tự do.'), _meal('fri-4', '16:30', 'Bữa tối', 'IF window đóng.')
+    ]
+  },
+  6: { name: 'Thứ 7', isRest: false, slots: [
+    _slot('sat-1', '05:00', '08:00', 'play', '⚔️', 'Đấu cờ / Giải đấu', 'Đấu online 15+10 hoặc giải weekend. Focus endgame technique.'),
+    _meal('sat-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sat-3', '09:30', '12:00', 'tactics', '🧩', 'Bài tập chiến thuật chuyên sâu', 'Complex tactics + endgame-style puzzles. 25+ bài.'),
+    _rest('sat-4', '12:00', 60), _meal('sat-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sat-6', '13:30', '15:00', 'opening', '♟️', 'Khai cuộc — Duy trì', 'Chessable Spaced Rep. Ôn repertoire.'),
+    _slot('sat-7', '15:00', '16:00', 'endgame', '♟️', 'Tàn cuộc — Weekly Review', 'Ôn lại positions đã học trong tuần.'),
+    _dumbSat,
+    _meal('sat-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('sat-9', '17:30', '19:30', 'rest', '🎯', 'Thư giãn', 'Rời xa bàn cờ. Đọc sách, xem phim.')
+  ]},
+  0: { name: 'Chủ Nhật', isRest: false, slots: [
+    _sunRecovery,
+    _slot('sun-1', '06:00', '09:00', 'play', '⚔️', 'Đấu cờ / Giải đấu', 'Đấu online hoặc giải weekend. Apply endgame technique.'),
+    _meal('sun-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sun-3', '09:30', '12:00', 'review', '📊', 'Tổng kết tuần', 'Review ván đấu trong tuần. Focus endgame analysis.'),
+    _rest('sun-4', '12:00', 60), _meal('sun-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sun-6', '13:30', '15:00', 'endgame', '♟️', 'Tàn cuộc — Prep tuần mới', 'Chọn chủ đề endgame cho tuần tới. Plan study.'),
+    _slot('sun-7', '15:00', '16:30', 'endgame', '♟️', 'Tàn cuộc — Study', 'Focus vào chủ đề yếu nhất.'),
+    _meal('sun-8', '16:30', 'Bữa tối', 'Bữa tối nhẹ (~600kcal).'),
+    _slot('sun-9', '17:00', '19:00', 'rest', '🎯', 'Thư giãn', 'Nghỉ ngơi, chuẩn bị tuần mới.')
+  ]}
+};
+
+// ─── MIDDLEGAME PRESET ───
+// Focus: 14h middlegame, 12h tactics, 8h play, 4h opening/endgame maintenance
+const SCHEDULE_MIDDLEGAME = {
+  1: { name: 'Thứ 2', isRest: false, slots: [
+    _slot('mon-1', '05:00', '08:00', 'middlegame', '♟️', 'Trung cuộc — Positional Play', 'Chess Structures (Flores Rios) / Mastering Chess Strategy (Hellsten). Pawn structures + plans.'),
+    _meal('mon-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau xanh (~500kcal).'),
+    _slot('mon-3', '09:30', '12:00', 'tactics', '🧩', 'Bài tập chiến thuật', 'KCT: 25-30 bài/ngày. Focus positional tactics + combinations.'),
+    _rest('mon-4', '12:00', 60), _meal('mon-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('mon-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Exercises', 'Solve positional puzzles. Hellsten exercises. 20+ bài.'),
+    _slot('mon-7', '15:00', '16:30', 'play', '⚔️', 'Đấu cờ & Phân tích', '1-2 ván 15+10, focus positional decisions.'),
+    _meal('mon-8', '16:30', 'Bữa tối', 'Salad protein + khoai lang (~600kcal).'),
+    _slot('mon-9', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _runMon
+  ]},
+  2: { name: 'Thứ 3', isRest: false, slots: [
+    _slot('tue-1', '05:00', '08:00', 'middlegame', '♟️', 'Trung cuộc — Pawn Structures', 'Chess Structures deep study. 3-4 cấu trúc mới/tuần. Model games.'),
+    _meal('tue-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('tue-3', '09:30', '12:00', 'study', '📺', 'VODs — Ván mẫu GM Positional', 'Karpov, Petrosian, Carlsen. Prophylactic thinking, long-term planning.'),
+    _rest('tue-4', '12:00', 60), _meal('tue-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('tue-6', '13:30', '15:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _slot('tue-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài. Positional combinations.'),
+    _dumbTue,
+    _meal('tue-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('tue-9', '17:30', '19:30', 'opening', '♟️', 'Khai cuộc — Duy trì', 'Spaced Rep. Liên kết khai cuộc → cấu trúc tốt → plans.')
+  ]},
+  3: { name: 'Thứ 4', isRest: false, slots: [
+    _slot('wed-1', '05:00', '08:00', 'middlegame', '♟️', 'Trung cuộc — Strategy', 'Advanced: prophylaxis, positional sacrifices, piece coordination.'),
+    _meal('wed-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('wed-3', '09:30', '12:00', 'middlegame', '♟️', 'Trung cuộc — Model Games', 'Phân tích ván GM chuyên sâu. Pause và đoán nước đi.'),
+    _rest('wed-4', '12:00', 60), _meal('wed-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('wed-6', '13:30', '16:30', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi chiều dài).'),
+    _meal('wed-7', '16:30', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('wed-8', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi tối).'),
+    _runWed
+  ]},
+  4: { name: 'Thứ 5', isRest: false, slots: [
+    _slot('thu-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật chuyên sâu', 'KCT: 30+ bài. Complex combinations + positional tactics.'),
+    _meal('thu-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('thu-3', '09:30', '12:00', 'middlegame', '♟️', 'Trung cuộc — Weak Squares & Outposts', 'Focus: weak squares, outposts, piece activity, open files.'),
+    _rest('thu-4', '12:00', 60), _meal('thu-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('thu-6', '13:30', '15:00', 'endgame', '♟️', 'Tàn cuộc — Duy trì', 'Ôn lại endgame positions. Light practice.'),
+    _slot('thu-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài.'),
+    _dumbThu,
+    _meal('thu-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('thu-9', '17:30', '19:30', 'middlegame', '♟️', 'Trung cuộc — Planning', 'Học planning: khi nào attack, khi nào defend, khi nào đổi quân.')
+  ]},
+  5: { name: 'Thứ 6', isRest: true,
+    restMessage: '🟢 Nghỉ ngơi — Hồi phục năng lượng.',
+    slots: [
+      _exercise('fri-1', '07:00', '07:30', '🚶', 'Đi bộ nhẹ (optional)', '30 phút đi bộ thư giãn.'),
+      _meal('fri-2', '09:00', 'Bữa sáng', 'Ăn thoải mái.'), _meal('fri-3', '13:00', 'Bữa trưa', 'Ăn tự do.'), _meal('fri-4', '16:30', 'Bữa tối', 'IF window đóng.')
+    ]
+  },
+  6: { name: 'Thứ 7', isRest: false, slots: [
+    _slot('sat-1', '05:00', '08:00', 'play', '⚔️', 'Đấu cờ / Giải đấu', 'Đấu online 15+10 hoặc giải. Focus áp dụng positional concepts.'),
+    _meal('sat-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sat-3', '09:30', '12:00', 'tactics', '🧩', 'Bài tập chuyên sâu', 'Complex positional tactics. 25+ bài.'),
+    _rest('sat-4', '12:00', 60), _meal('sat-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sat-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Weekly Review', 'Ôn lại concepts đã học trong tuần.'),
+    _slot('sat-7', '15:00', '16:00', 'play', '⚔️', 'Đấu cờ nhanh', '2-3 ván rapid. Apply positional ideas.'),
+    _dumbSat,
+    _meal('sat-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('sat-9', '17:30', '19:30', 'rest', '🎯', 'Thư giãn', 'Rời xa bàn cờ.')
+  ]},
+  0: { name: 'Chủ Nhật', isRest: false, slots: [
+    _sunRecovery,
+    _slot('sun-1', '06:00', '09:00', 'play', '⚔️', 'Đấu cờ / Giải đấu', 'Đấu online. Focus positional play.'),
+    _meal('sun-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sun-3', '09:30', '12:00', 'review', '📊', 'Tổng kết tuần', 'Review ván đấu. Focus positional decisions & pawn structures.'),
+    _rest('sun-4', '12:00', 60), _meal('sun-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sun-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Prep tuần mới', 'Chọn pawn structures focus tuần tới.'),
+    _slot('sun-7', '15:00', '16:30', 'mixed', '♟️', 'Ôn tập tự do', 'Focus vào điểm yếu.'),
+    _meal('sun-8', '16:30', 'Bữa tối', 'Bữa tối nhẹ (~600kcal).'),
+    _slot('sun-9', '17:00', '19:00', 'rest', '🎯', 'Thư giãn', 'Nghỉ ngơi, chuẩn bị tuần mới.')
+  ]}
+};
+
+// ─── TOURNAMENT PRESET ───
+// Focus: Max tactics (16h), play (10h), opponent prep (6h). NO TEACHING.
+// Based on NextLevelChess & GM Marin pre-tournament advice
+const SCHEDULE_TOURNAMENT = {
+  1: { name: 'Thứ 2', isRest: false, slots: [
+    _slot('mon-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật — Calculation', 'KCT: 30+ bài. Deep calculation 4-6 nước. Blindfold variations.'),
+    _meal('mon-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau xanh (~500kcal).'),
+    _slot('mon-3', '09:30', '12:00', 'play', '⚔️', 'Đấu cờ — Tournament Simulation', '2 ván 30+0. Simulate tournament: clock management, focus.'),
+    _rest('mon-4', '12:00', 60), _meal('mon-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('mon-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Calculation Practice', 'Deep analysis positions. Think 10+ phút/position.'),
+    _slot('mon-7', '15:00', '16:30', 'tactics', '🧩', 'Chiến thuật — Pattern Drill', 'Speed solving: 50+ bài easy-medium. Build pattern recognition.'),
+    _meal('mon-8', '16:30', 'Bữa tối', 'Salad protein + khoai lang (~600kcal).'),
+    _slot('mon-9', '17:00', '19:00', 'study', '🎯', 'Opponent Prep', 'Phân tích ván đấu đối thủ giải sắp tới. Tìm weakness.'),
+    _runMon
+  ]},
+  2: { name: 'Thứ 3', isRest: false, slots: [
+    _slot('tue-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật — Hard Puzzles', 'KCT: 25 bài hard. Calculation depth 5+ nước.'),
+    _meal('tue-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('tue-3', '09:30', '12:00', 'endgame', '♟️', 'Tàn cuộc — Practical Drills', 'Endgame positions thực chiến. R+P, K+P, minor piece endings.'),
+    _rest('tue-4', '12:00', 60), _meal('tue-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('tue-6', '13:30', '15:00', 'opening', '♟️', 'Khai cuộc — Ôn tập', 'Chessable Spaced Rep. KHÔNG học biến mới. Chỉ ôn.'),
+    _slot('tue-7', '15:00', '16:00', 'tactics', '🧩', 'Chiến thuật', 'KCT: 15-20 bài. Mix themes.'),
+    _dumbTue,
+    _meal('tue-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('tue-9', '17:30', '19:30', 'study', '🎯', 'Opponent Prep', 'Phân tích đối thủ: khai cuộc hay chơi, weakness patterns.')
+  ]},
+  3: { name: 'Thứ 4', isRest: false, slots: [
+    _slot('wed-1', '05:00', '08:00', 'play', '⚔️', 'Đấu cờ — Serious Games', '1-2 ván 30+0. Tournament conditions. Deep analysis sau mỗi ván.'),
+    _meal('wed-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('wed-3', '09:30', '12:00', 'tactics', '🧩', 'Chiến thuật chuyên sâu', 'KCT: 30+ bài. Complex multi-move combinations.'),
+    _rest('wed-4', '12:00', 60), _meal('wed-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('wed-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Critical Moments', 'Phân tích critical decisions từ ván giải gần đây.'),
+    _slot('wed-7', '15:00', '16:30', 'endgame', '♟️', 'Tàn cuộc — Key Positions', 'Ôn lại must-know endgames. Speed drills.'),
+    _meal('wed-8', '16:30', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('wed-9', '17:00', '19:00', 'study', '🎯', 'Opponent Prep', 'Chuẩn bị khai cuộc specific cho đối thủ.'),
+    _runWed
+  ]},
+  4: { name: 'Thứ 5', isRest: false, slots: [
+    _slot('thu-1', '05:00', '08:00', 'tactics', '🧩', 'Chiến thuật — Speed & Accuracy', 'KCT: 40+ bài mixed difficulty. Tốc độ + chính xác.'),
+    _meal('thu-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('thu-3', '09:30', '12:00', 'study', '📺', 'Phân tích ván đấu', 'Review ván mình gần đây. Tìm recurring patterns & mistakes.'),
+    _rest('thu-4', '12:00', 60), _meal('thu-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('thu-6', '13:30', '15:00', 'play', '⚔️', 'Đấu cờ — Practice', '2 ván 15+10. Apply prep.'),
+    _slot('thu-7', '15:00', '16:00', 'opening', '♟️', 'Khai cuộc — Specific Prep', 'Chuẩn bị anti-systems cho đối thủ cụ thể.'),
+    _dumbThu,
+    _meal('thu-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('thu-9', '17:30', '19:30', 'tactics', '🧩', 'Chiến thuật buổi tối', 'Easy-medium puzzles. Build confidence trước giải.')
+  ]},
+  5: { name: 'Thứ 6', isRest: true,
+    restMessage: '🟢 Nghỉ ngơi HOÀN TOÀN — Hồi phục trước giải. Không cờ!',
+    slots: [
+      _exercise('fri-1', '07:00', '07:30', '🚶', 'Đi bộ nhẹ', '30 phút đi bộ thư giãn. Thiền 10 phút.'),
+      _meal('fri-2', '09:00', 'Bữa sáng', 'Ăn healthy, đủ carbs.'), _meal('fri-3', '13:00', 'Bữa trưa', 'Ăn đủ chất.'), _meal('fri-4', '16:30', 'Bữa tối', 'Nhẹ nhàng.')
+    ]
+  },
+  6: { name: 'Thứ 7', isRest: false, slots: [
+    _slot('sat-1', '05:00', '08:00', 'play', '⚔️', 'Đấu cờ — Tournament Sim', 'Simulate: 1-2 ván 30+0. Clock management.'),
+    _meal('sat-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sat-3', '09:30', '12:00', 'tactics', '🧩', 'Chiến thuật — Mixed', 'Tournament-level puzzles. 30+ bài. Time pressure practice.'),
+    _rest('sat-4', '12:00', 60), _meal('sat-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sat-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Review', 'Ôn key concepts. Critical positions.'),
+    _slot('sat-7', '15:00', '16:00', 'study', '🎯', 'Opponent Prep', 'Final prep cho đối thủ tiếp theo.'),
+    _dumbSat,
+    _meal('sat-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('sat-9', '17:30', '19:30', 'rest', '🎯', 'Thư giãn & Visualization', 'Nghỉ ngơi. Visualize ván đấu thành công.')
+  ]},
+  0: { name: 'Chủ Nhật', isRest: false, slots: [
+    _sunRecovery,
+    _slot('sun-1', '06:00', '09:00', 'play', '⚔️', 'Đấu cờ / Giải đấu', 'Tournament games hoặc serious practice.'),
+    _meal('sun-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sun-3', '09:30', '12:00', 'tactics', '🧩', 'Chiến thuật — Confidence Building', 'Solve bài dễ-trung bình. Build confidence. 30+ bài.'),
+    _rest('sun-4', '12:00', 60), _meal('sun-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sun-6', '13:30', '15:00', 'study', '🎯', 'Opponent Prep — Final Review', 'Review all opponent files. Lock in preparation.'),
+    _slot('sun-7', '15:00', '16:30', 'endgame', '♟️', 'Tàn cuộc — Must-Know Review', 'Ôn lại must-know endgames. Speed drill.'),
+    _meal('sun-8', '16:30', 'Bữa tối', 'Bữa tối nhẹ (~600kcal).'),
+    _slot('sun-9', '17:00', '19:00', 'rest', '🎯', 'Thư giãn', 'Preparation complete. Nghỉ ngơi, tự tin.')
+  ]}
+};
+
+// ─── RECOVERY PRESET ───
+// Focus: Game analysis (8h), VODs (8h), light everything. 36h total.
+// Based on NextLevelChess & ChessMood post-tournament advice
+const SCHEDULE_RECOVERY = {
+  1: { name: 'Thứ 2', isRest: false, slots: [
+    _slot('mon-1', '06:00', '08:00', 'review', '📊', 'Phân tích ván giải', 'Phân tích từng ván: opening accuracy, critical moments, endgame.'),
+    _meal('mon-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau xanh (~500kcal).'),
+    _slot('mon-3', '09:30', '12:00', 'study', '📺', 'VODs — Thư giãn & Học', 'Xem ván mẫu GM yêu thích. Fischer, Tal, Carlsen. Thưởng thức cờ.'),
+    _rest('mon-4', '12:00', 60), _meal('mon-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('mon-6', '13:30', '15:00', 'tactics', '🧩', 'Chiến thuật nhẹ', 'KCT: 15 bài. Không ép. Thưởng thức process.'),
+    _slot('mon-7', '15:00', '16:30', 'rest', '🌿', 'Nghỉ chiều', 'Đọc sách cờ nhẹ nhàng hoặc nghỉ ngơi.'),
+    _meal('mon-8', '16:30', 'Bữa tối', 'Salad protein + khoai lang (~600kcal).'),
+    _slot('mon-9', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _runMon
+  ]},
+  2: { name: 'Thứ 3', isRest: false, slots: [
+    _slot('tue-1', '06:00', '08:00', 'review', '📊', 'Phân tích ván giải', 'Tiếp tục phân tích ván. Error chart: recurring mistakes.'),
+    _meal('tue-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('tue-3', '09:30', '12:00', 'study', '📺', 'VODs — Ván mẫu cổ điển', 'Zurich 1953, My 60 Memorable Games, Tal classics.'),
+    _rest('tue-4', '12:00', 60), _meal('tue-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('tue-6', '13:30', '15:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh.'),
+    _slot('tue-7', '15:00', '16:00', 'endgame', '♟️', 'Tàn cuộc nhẹ', 'Ôn lại endgame positions. Casual practice.'),
+    _dumbTue,
+    _meal('tue-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('tue-9', '17:30', '19:00', 'opening', '♟️', 'Khai cuộc — Light Review', 'Spaced rep nhẹ. Explore biến mới cho fun.')
+  ]},
+  3: { name: 'Thứ 4', isRest: false, slots: [
+    _slot('wed-1', '06:00', '08:00', 'review', '📊', 'Phân tích ván giải — Deep Dive', 'So sánh analysis của mình vs engine. Key learning points.'),
+    _meal('wed-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('wed-3', '09:30', '12:00', 'middlegame', '♟️', 'Trung cuộc — Đọc sách', 'Đọc sách cờ nhẹ nhàng. My System, Chess Structures.'),
+    _rest('wed-4', '12:00', 60), _meal('wed-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('wed-6', '13:30', '16:30', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi chiều dài).'),
+    _meal('wed-7', '16:30', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('wed-8', '17:00', '19:00', 'teaching', '👨‍🏫', 'Dạy cờ', 'Trung tâm tỉnh (buổi tối).'),
+    _runWed
+  ]},
+  4: { name: 'Thứ 5', isRest: false, slots: [
+    _slot('thu-1', '06:00', '08:00', 'study', '📺', 'VODs — Documentary & Fun', 'Xem chess documentary, interviews, fun games. Rekindle passion.'),
+    _meal('thu-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('thu-3', '09:30', '12:00', 'tactics', '🧩', 'Chiến thuật thoải mái', 'KCT: 15-20 bài. Mixed difficulty. No pressure.'),
+    _rest('thu-4', '12:00', 60), _meal('thu-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('thu-6', '13:30', '15:00', 'middlegame', '♟️', 'Trung cuộc — Reflection', 'Nhìn lại những gì đã học. What worked? What to improve?'),
+    _slot('thu-7', '15:00', '16:00', 'endgame', '♟️', 'Tàn cuộc nhẹ', 'Practice endgame positions casual.'),
+    _dumbThu,
+    _meal('thu-8', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+    _slot('thu-9', '17:30', '19:00', 'rest', '🌿', 'Thư giãn buổi tối', 'Đọc sách, xem phim, dạo chơi.')
+  ]},
+  5: { name: 'Thứ 6', isRest: true,
+    restMessage: '🟢 Nghỉ ngơi hoàn toàn — Hồi phục sau giải. Enjoy life!',
+    slots: [
+      _exercise('fri-1', '07:00', '07:30', '🚶', 'Đi bộ nhẹ (optional)', '30 phút đi bộ thư giãn.'),
+      _meal('fri-2', '09:00', 'Bữa sáng', 'Ăn thoải mái.'), _meal('fri-3', '13:00', 'Bữa trưa', 'Ăn tự do.'), _meal('fri-4', '16:30', 'Bữa tối', 'Ăn gì thích.')
+    ]
+  },
+  6: { name: 'Thứ 7', isRest: true,
+    restMessage: '🟢 Nghỉ thêm ngày Thứ 7 — Hồi phục sau giai đoạn cường độ cao.',
+    slots: [
+      _exercise('sat-1', '07:00', '07:30', '🚶', 'Đi bộ nhẹ', 'Active recovery.'),
+      _meal('sat-2', '09:00', 'Bữa sáng', 'Ăn thoải mái.'),
+      _slot('sat-3', '10:00', '12:00', 'play', '⚔️', 'Casual Chess', 'Chơi blitz, Fischer random, bullet — cho FUN. Không áp lực.'),
+      _meal('sat-4', '13:00', 'Bữa trưa', 'Ăn tự do.'),
+      _slot('sat-5', '14:00', '16:00', 'study', '📺', 'VODs Thư giãn', 'Xem ván mẫu hoặc chess content yêu thích.'),
+      _dumbSat,
+      _meal('sat-6', '17:00', 'Bữa tối', 'Salad protein (~600kcal).'),
+      _slot('sat-7', '17:30', '19:30', 'rest', '🎯', 'Thư giãn', 'Rời xa bàn cờ.')
+    ]
+  },
+  0: { name: 'Chủ Nhật', isRest: false, slots: [
+    _sunRecovery,
+    _slot('sun-1', '06:00', '08:00', 'review', '📊', 'Tổng kết giải — Final Review', 'Tổng kết toàn bộ giải. Error chart. Key takeaways.'),
+    _meal('sun-2', '09:00', 'Bữa sáng', 'Yến mạch + trứng + rau (~500kcal).'),
+    _slot('sun-3', '09:30', '12:00', 'study', '📺', 'VODs — Inspiration', 'Xem ván mẫu inspirational. Rekindle motivation cho chu kỳ mới.'),
+    _rest('sun-4', '12:00', 60), _meal('sun-5', '13:00', 'Bữa trưa', 'Cơm gạo lứt + protein + rau (~700kcal).'),
+    _slot('sun-6', '13:30', '15:00', 'tactics', '🧩', 'Chiến thuật nhẹ', 'Easy puzzles. Fun solving. 15 bài.'),
+    _slot('sun-7', '15:00', '16:30', 'mixed', '♟️', 'Lên kế hoạch chu kỳ mới', 'Plan: chủ đề focus tiếp theo, chọn preset phù hợp.'),
+    _meal('sun-8', '16:30', 'Bữa tối', 'Bữa tối nhẹ (~600kcal).'),
+    _slot('sun-9', '17:00', '19:00', 'rest', '🎯', 'Thư giãn', 'Nghỉ ngơi, chuẩn bị chu kỳ mới.')
+  ]}
+};
+
 // ═══ Schedule Profile System ═══
 
+const SCHEDULE_PROFILES_VERSION = 2; // Increment to force profile reset with new presets
+
 function getScheduleProfiles() {
-  const custom = JSON.parse(localStorage.getItem('chess_schedule_profiles') || 'null');
-  if (custom) return custom;
-  // Initialize with default profile from current weeklySchedule
+  const savedVersion = parseInt(localStorage.getItem('chess_schedule_profiles_version') || '0');
+  if (savedVersion >= SCHEDULE_PROFILES_VERSION) {
+    const custom = JSON.parse(localStorage.getItem('chess_schedule_profiles') || 'null');
+    if (custom) return custom;
+  }
+  // Initialize with all built-in presets
   const defaultProfiles = {
     'default': {
-      name: 'Lịch Mặc Định (1800-2000)',
-      description: 'Lịch tập luyện ban đầu cho giai đoạn 1800→2000',
+      name: '🟢 Khai Cuộc — Xây Dựng Repertoire',
+      description: 'Focus khai cuộc mới + tactics tăng cường. Phù hợp khi học Reti/Scandinavian/Dutch.',
       schedule: JSON.parse(JSON.stringify(TRAINING_CONFIG.weeklySchedule)),
       isDefault: true,
+      isBuiltIn: true,
+      createdAt: new Date().toISOString()
+    },
+    'endgame': {
+      name: '🔵 Tàn Cuộc — Endgame Mastery',
+      description: 'Focus 100 Endgames / Silman / Shereshevsky. 14h tàn cuộc + 12h chiến thuật/tuần.',
+      schedule: JSON.parse(JSON.stringify(SCHEDULE_ENDGAME)),
+      isDefault: false,
+      isBuiltIn: true,
+      createdAt: new Date().toISOString()
+    },
+    'middlegame': {
+      name: '🟣 Trung Cuộc — Positional Mastery',
+      description: 'Focus Chess Structures + Hellsten. 14h trung cuộc + 12h chiến thuật/tuần.',
+      schedule: JSON.parse(JSON.stringify(SCHEDULE_MIDDLEGAME)),
+      isDefault: false,
+      isBuiltIn: true,
+      createdAt: new Date().toISOString()
+    },
+    'tournament': {
+      name: '🔴 Trước Giải — Cường Độ Cao',
+      description: 'Bỏ dạy, max tactics (16h), opponent prep. 2-3 tuần trước giải lớn.',
+      schedule: JSON.parse(JSON.stringify(SCHEDULE_TOURNAMENT)),
+      isDefault: false,
+      isBuiltIn: true,
+      createdAt: new Date().toISOString()
+    },
+    'recovery': {
+      name: '🟡 Xả Hơi — Sau Giải',
+      description: 'Phân tích giải + VODs thư giãn. 36h/tuần. Hồi phục tinh thần.',
+      schedule: JSON.parse(JSON.stringify(SCHEDULE_RECOVERY)),
+      isDefault: false,
+      isBuiltIn: true,
       createdAt: new Date().toISOString()
     }
   };
   localStorage.setItem('chess_schedule_profiles', JSON.stringify(defaultProfiles));
+  localStorage.setItem('chess_schedule_profiles_version', String(SCHEDULE_PROFILES_VERSION));
   return defaultProfiles;
 }
 
 function getPhaseScheduleMap() {
   const stored = JSON.parse(localStorage.getItem('chess_phase_schedule_map') || 'null');
   if (stored) return stored;
-  // Default: all phases use default
+  // Default: all phases use default (opening)
   const map = {};
   TRAINING_CONFIG.phases.forEach(p => { map[p.id] = 'default'; });
   localStorage.setItem('chess_phase_schedule_map', JSON.stringify(map));
